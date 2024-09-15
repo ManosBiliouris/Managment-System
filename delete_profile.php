@@ -11,7 +11,7 @@ $password = "";
 $dbname = "task_management";
 
 // Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = mysqli_connect($servername, $username, $password, $dbname);
 
 // Check connection
 if ($conn->connect_error) {
@@ -24,7 +24,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "DELETE FROM users WHERE username='$username'";
     if ($conn->query($sql) === TRUE) {
         session_destroy();
-        header("Location: login.html");
+        header("Location: index.html");
+        exit();
+    } else {
+        echo "Error deleting profile: " . $conn->error;
+    }
+}
+
+$username = $_SESSION['username'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $sql = "DELETE FROM tasks WHERE username='$username'";
+    if ($conn->query($sql) === TRUE) {
+        session_destroy();
+        header("Location: index.html");
         exit();
     } else {
         echo "Error deleting profile: " . $conn->error;
@@ -41,27 +54,29 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delete Profile</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js">defer</script>
+    <style>
+        body {
+            border: 0;
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            background-color: rgba(250, 250, 250);
+            color: black; 
+        }
+    </style>
 </head>
 <body>
 
-<!-- Navigation snippet starts here -->
-<nav>
-    <ul>
-        <li><a href="profile.php">Profile</a></li>
-        <li><a href="tasks.php">Tasks</a></li>
-        <li><a href="search.php">Search</a></li>
-        <li><a href="export.php">Export</a></li>
-        <li><a href="logout.php">Logout</a></li>
-    </ul>
-</nav>
-<!-- Navigation snippet ends here -->
+<input type="checkbox" class="theme-checkbox" onclick="toggleTheme()"> 
 
-<h2>Delete Profile</h2>
-<p>Are you sure you want to delete your profile? This action cannot be undone.</p>
+<div class="container">
+    <h2>Delete Profile</h2>
+    <p>Are you sure you want to delete your profile? This action cannot be undone.</p>
 
-<form action="delete_profile.php" method="POST">
+    <form action="delete_profile.php" method="POST">
     <input type="submit" value="Delete Profile">
 </form>
-
+</div>
 </body>
 </html>

@@ -5,17 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 40px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            width: 350px;
+            position: relative;
+        }
+
+        .back-arrow {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .back-arrow:hover {
+            color: #3f3d3d;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #333;
+            outline: none;
+        }
+
+        input[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #333;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #7c7c7c;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+
+        .footer-text a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+
+        body.dark-mode {
+            background-color: #333;
+            color: white;
+        }
+
+        body.dark-mode input[type="submit"] {
+            background-color: black;
+        }
+
+        body.dark-mode input[type="submit"]:hover {
+            background-color: #3b3b3b;
+        }
+
+    </style>
 </head>
 <body>
-    <h2>Login</h2>
-    <form action="login.php" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br>
+    <input type="checkbox" class="theme-checkbox" onclick="toggleTheme()">
+    <div class="login-container">
+        <!-- Back arrow link to index.html -->
+        <a href="index.html" class="back-arrow">&#8592;</a>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
+        <h2>Login</h2>
+        <form action="http://localhost/login.php" method="POST">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
 
-        <input type="submit" value="Login">
-    </form>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <input type="submit" value="Login">
+        </form>
+        <div class="footer-text">
+            <p>Don't have an account? <a href="register.html">Sign up</a></p>
+        </div>
+    </div>
 </body>
 </html>
