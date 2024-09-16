@@ -99,8 +99,16 @@
         <li><a href="tasks.php">Tasks</a></li>
         <li><a href="search.php">Search</a></li>
         <li><a href="export.php">Export</a></li>
-        <li><a href="logout.php">Logout</a></li>
+        <li><a href="index.html" onclick="return confirmLogout()">Logout</a></li>
     </ul>
 </nav>
+
+<script>
+    // JavaScript function to confirm logout
+    function confirmLogout() {
+        return confirm("Are you sure you want to log out?");
+    }
+</script>
+
 </body>
 </html>

@@ -202,20 +202,6 @@ $conn->close();
             width: 100%; 
         }
 
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                align-items: center;
-            }
-            .search-task-container {
-                width: 90%;
-                margin-bottom: 20px;
-            }
-            .results-container {
-                width: 90%;
-            }
-        }
-
         body.dark-mode {
             background-color: #333;
             color: white;

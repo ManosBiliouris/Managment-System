@@ -31,31 +31,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task']) && !isset($_P
     $task = $_POST['task'];
     $status = $_POST['status'];
 
-    $sql = "INSERT INTO tasks (username, task, status) VALUES ('$user', '$task', '$status')";
+    // Check if task already exists
+    $sql_check = "SELECT * FROM tasks WHERE username='$user' AND task='$task'";
+    $result_check = $conn->query($sql_check);
 
-    if ($conn->query($sql) === TRUE) {
-
-        // Send Simplepush notification
-        $title = "New task added";
-        $message = $task; // The task name
-        $url = "https://api.simplepush.io/send";
-
-        $data = array(
-            'key' => $simplepush_key, // User's Simplepush key
-            'title' => $title,
-            'msg' => $message
-        );
-
-        // Initialize cURL session
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        $response = curl_exec($ch); // Execute the request
-
-        curl_close($ch); // Close the cURL session
+    if ($result_check->num_rows > 0) {
+        // Task already exists, set session error flag
+        $_SESSION['task_exists_error'] = true;
+        $_SESSION['submitted_task'] = $task; // Store the submitted task value
+        header("Location: tasks.php");  // Redirect to the task page to show the error
+        exit();
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        // Insert new task
+        $sql = "INSERT INTO tasks (username, task, status) VALUES ('$user', '$task', '$status')";
+        if ($conn->query($sql) === TRUE) {
+            // Clear error flag after successful task addition
+            unset($_SESSION['task_exists_error']);
+            unset($_SESSION['submitted_task']); // Clear the submitted task value
+            header("Location: tasks.php");
+            exit();
+        } else {
+            echo "Error: " . $sql . "<br>" . $conn->error;
+        }
     }
 }
 
@@ -196,12 +193,45 @@ $result = $conn->query($sql);
             background-color: #575757;
         }
 
-        /* Tasks container */
-        .tasks-container {
-            flex-grow: 1;
+        /* Assigned container*/
+        .assigned-container {
             display: flex;
             flex-direction: column;
-            max-width: 70%;
+            width: 70vh;
+            height: calc(100vh - 150px);
+            overflow-y: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin-left: 40px;
+        }
+        
+        h3 {
+            font-size: 24px;
+            color: #333;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .assigned-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .assigned-list div {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tasks container */
+        .tasks-container {
+            display: flex;
+            flex-direction: column;
+            width: 35%;
             height: calc(100vh - 150px);
             overflow-y: auto;
             padding: 20px;
@@ -269,18 +299,17 @@ $result = $conn->query($sql);
             width: 100%; 
         }
 
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                align-items: center;
-            }
-            .new-task-container {
-                width: 90%;
-                margin-bottom: 20px;
-            }
-            .tasks-container {
-                width: 90%;
-            }
+        input.error {
+            border-color: red;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
         }
 
         body.dark-mode {
@@ -293,7 +322,8 @@ $result = $conn->query($sql);
         }
 
         body.dark-mode .new-task-container,
-        body.dark-mode .tasks-container {
+        body.dark-mode .tasks-container,
+        body.dark-mode .assigned-container {
             background-color: #444;
             color: white;
             box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
@@ -356,9 +386,22 @@ $result = $conn->query($sql);
             background-color: #3b3b3b;
         }
 
-        /* Ensure h2 text color is updated in dark mode */
         body.dark-mode h2 {
             color: #ddd;
+        }
+        
+        body.dark-mode h3 {
+            color: #ddd;
+        }
+
+        body.dark-mode input.error {
+            border-color: darkred;
+            background-color: #721c24;
+            color: white;
+        }
+
+        body.dark-mode .error-message {
+            color: darkred;
         }
     </style>
 </head>
@@ -372,10 +415,13 @@ $result = $conn->query($sql);
 <div class="container">
     <!-- New Task Box on the left -->
     <div class="new-task-container" id="new-task-box">
-        <form action="tasks.php" method="POST">
+        <form id="new-task-form" action="tasks.php" method="POST">
             <label for="task">New Task:</label>
             <input type="text" id="task" name="task" required>
 
+            <label for="who">Assign to:</label>
+            <input type="text" id="who" name="who">
+            
             <label for="status">Status:</label>
             <select id="status" name="status" required>
                 <option value="Pending">Pending</option>
@@ -384,6 +430,7 @@ $result = $conn->query($sql);
             </select>
 
             <input type="submit" value="Add Task">
+            <div id="task-error" style="color: red; display: none;">Task already exists!</div>
         </form>
 
         <!-- Hidden Edit Task Status Form -->
@@ -401,7 +448,7 @@ $result = $conn->query($sql);
         </form>
     </div>
 
-    <!-- Task List in the middle, scrollable -->
+    <!-- Task List in the middle -->
     <div class="tasks-container">
         <h2>Your Tasks</h2>
         <div class="line"></div>
@@ -417,7 +464,7 @@ $result = $conn->query($sql);
                     // Check if the task is "Done" to apply the line-through class
                     $class = $taskStatus === 'Done' ? 'task-done' : '';
 
-                    echo "<div>";
+                    echo "<div data-task-id=\"$taskId\">";
                     echo "<strong class=\"$class\">$taskName</strong> - Status: $taskStatus";
                     echo "<br><small>Added on: $createdAt</small>";
                     echo " <a href=\"#\" class=\"edit-link\" onclick=\"editStatus($taskId, '$taskStatus', '$taskName')\">Edit</a>";
@@ -430,34 +477,71 @@ $result = $conn->query($sql);
             ?>
         </div>
     </div>
+    <!-- Assigned List in the right -->
+    <div class="assigned">
+        <div class="assigned-container">
+            <h3>Assigned Tasks</h3>
+            <div class="line"></div>
+            <div class="assigned-list" id="list">
+                
+            </div>
+        </div>
+    </div>
 </div>
 </header>
 <script>
-function editStatus(id, currentStatus, taskName) {
-    // Show the edit status form
-    document.getElementById('edit-status-form').style.display = 'block';
+    document.addEventListener("DOMContentLoaded", function () {
+        const taskInput = document.getElementById('task');
+        const errorMessage = document.getElementById('duplicate-error');
 
-    // Set the task ID in the hidden input
-    document.getElementById('edit_task_id').value = id;
+        // Check if PHP has set the session error flag
+        <?php if (isset($_SESSION['task_exists_error']) && $_SESSION['task_exists_error']) { ?>
+            // Show error styling and message
+            taskInput.classList.add('error');
+            errorMessage.style.display = 'block';  // Show the error message
+        <?php } ?>
 
-    // Set the current status in the dropdown
-    document.getElementById('new_status').value = currentStatus;
-
-    // Update the label with the task name
-    document.getElementById('update-status-label').textContent = 'Update Status of "' + taskName + '":';
-
-    document.getElementById('edit-status-form').addEventListener('submit', function (event) {
-    var taskId = document.getElementById('edit_task_id').value;
-    var newStatus = document.getElementById('new_status').value;
-
-    // Update the task appearance in real-time if it's set to Done
-    if (newStatus === 'Done') {
-        var taskElement = document.querySelector('[data-task-id="' + taskId + '"]');
-        taskElement.classList.add('task-done');
-        }
+        taskInput.addEventListener('input', function () {
+            // Remove error class and hide message when user starts typing again
+            taskInput.classList.remove('error');
+            errorMessage.style.display = 'none';
+        });
     });
 
-}
+    document.getElementById('new-task-form').addEventListener('submit', function (event) {
+        event.preventDefault();  // Prevent form from submitting immediately
+        var task = document.getElementById('task').value;
+
+        // AJAX request to check for duplicate task names
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'check_task.php', true);
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhr.onload = function () {
+            if (this.responseText === 'duplicate') {
+                // Show error message
+                document.getElementById('task-error').style.display = 'block';
+                document.getElementById('task').classList.add('error');
+            } else {
+                // Submit the form if no duplicates are found
+                document.getElementById('new-task-form').submit();
+            }
+        };
+        xhr.send('task=' + encodeURIComponent(task));
+    });
+
+    function editStatus(id, currentStatus, taskName) {
+        // Show the edit status form
+        document.getElementById('edit-status-form').style.display = 'block';
+
+        // Set the task ID in the hidden input
+        document.getElementById('edit_task_id').value = id;
+
+        // Set the current status in the dropdown
+        document.getElementById('new_status').value = currentStatus;
+
+        // Update the label with the task name
+        document.getElementById('update-status-label').textContent = 'Update Status of "' + taskName + '":';
+    }
 </script>
 </body>
 </html>
