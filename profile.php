@@ -164,13 +164,61 @@ $conn->close();
         a.delete-profile:hover {
             background-color: #ff1f1f;
         }
+        
+        /* Modal container, hidden by default */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; 
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0, 0, 0, 0.4); /* Black background with opacity */
+        }
 
-        @media (max-width: 768px) {
-            .container {
-                margin: 20px;
-                padding: 15px;
-                top: 80px; /* Adjust based on the height of your nav */
-            }
+        /* Modal content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        /* Close button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #confirmDeleteBtn {
+            background-color: red;
+            color: white;
+        }
+
+        #cancelDeleteBtn {
+            background-color: gray;
+            color: white;
         }
 
         body.dark-mode {
@@ -212,6 +260,46 @@ $conn->close();
         body.dark-mode nav ul li a:hover {
             background-color: #575757;
         }  
+
+        /* Dark mode for modal background */
+        body.dark-mode .modal-content {
+            background-color: #444;
+            color: white;
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        body.dark-mode .modal-content .close {
+            color: white;
+        }
+
+        body.dark-mode .modal-content .close:hover,
+        body.dark-mode .modal-content .close:focus {
+            color: #ff6c6c;
+        }
+
+        body.dark-mode #confirmDeleteBtn {
+            background-color: #ff6c6c;
+            color: white;
+            border: none;
+        }
+
+        body.dark-mode #confirmDeleteBtn:hover {
+            background-color: #ff1f1f;
+        }
+
+        body.dark-mode #cancelDeleteBtn {
+            background-color: #555;
+            color: white;
+            border: none;
+        }
+
+        body.dark-mode #cancelDeleteBtn:hover {
+            background-color: #777;
+        }
+
+        body.dark-mode .modal {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
     </style>
 </head>
 <body class="<?php echo isset($_COOKIE['theme']) && $_COOKIE['theme'] === 'dark' ? 'dark-mode' : ''; ?>">
@@ -237,7 +325,17 @@ $conn->close();
     </div>
     
     <!-- Delete Profile Button -->
-    <a href="delete_profile.php" class="delete-profile">Delete Profile</a>
+    <a href="#" class="delete-profile" id="deleteProfileBtn">Delete Profile</a>
+
+    <!-- Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Are you sure you want to delete your account? This action cannot be undone!</p>
+            <button id="confirmDeleteBtn">Yes, Delete My Account</button>
+            <button id="cancelDeleteBtn">Cancel</button>
+        </div>
+    </div>
 </div>
 </header>
 <script>
@@ -290,6 +388,50 @@ $conn->close();
         date.setFullYear(date.getFullYear() + 1); // Set the cookie to expire in 1 year
         return date.toUTCString();
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+    // Get modal element
+    var modal = document.getElementById("deleteModal");
+
+    // Get delete profile button that opens the modal
+    var deleteBtn = document.getElementById("deleteProfileBtn");
+
+    // Get the close button element in the modal
+    var closeModal = document.getElementsByClassName("close")[0];
+
+    // Get the confirm and cancel buttons in the modal
+    var confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+    var cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+
+    // When the user clicks on the delete profile button, open the modal
+    deleteBtn.onclick = function(event) {
+        event.preventDefault();
+        modal.style.display = "block";
+    };
+
+    // When the user clicks on (x), close the modal
+    closeModal.onclick = function() {
+        modal.style.display = "none";
+    };
+
+    // When the user clicks on cancel, close the modal
+    cancelDeleteBtn.onclick = function() {
+        modal.style.display = "none";
+    };
+
+    // When the user clicks on the confirm delete button, proceed with account deletion
+    confirmDeleteBtn.onclick = function() {
+        window.location.href = "delete_profile.php"; // Redirect to your deletion PHP script
+    };
+
+    // When the user clicks anywhere outside the modal, close it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    };
+});
+
 
 </script>
 </body>
